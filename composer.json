@@ -1,0 +1,19 @@
+{
+    "name": "senor16/php-mvc",
+    "description": "A template for PHP projects using MVC",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Sesso Kosga",
+            "email": "kosgasesso@gmail.com"
+        }
+    ],
+    "autoload":{
+        "psr-4" :{
+            "App\\": "app/",
+            "App\\Models\\": "models/",
+            "App\\Controllers\\": "controllers/"
+        }
+    },
+    "require": {}
+}
