@@ -1,67 +1,68 @@
 <?php
-session_start();
-use App\Controllers\HttpErrors;
+ session_start();
+ use App\Controllers\HttpErrors;
 
-define('ROOT', str_replace('index.php','',$_SERVER['SCRIPT_FILENAME']));
+ define('ROOT', str_replace('index.php','',$_SERVER['SCRIPT_FILENAME']));
 
-$url = $_SERVER['SERVER_ADDR'] == "::1" ? 'localhost' : $_SERVER['SERVER_ADDR'];
-define('ROOT_URL','http://'.$url.'/php/php-mvc/');
+ $url = $_SERVER['SERVER_ADDR'] == "::1" ? 'localhost' : $_SERVER['SERVER_ADDR'];
 
-require_once ROOT."vendor/autoload.php";
+ $folder =  str_replace("index.php",'',$_SERVER['SCRIPT_NAME']);
+ define('ROOT_URL','http://'.$url.$folder);
+
+ require_once ROOT."vendor/autoload.php";
+
+// Get the url parameters
+ $params = $_GET['p'];
+
+// Store the parameters in a table
+ $params = explode('/',$params);
 
 
-//Get the url parameters
-$params = $_GET['p'];
+// Get the controller
+// If not set choose the default controller
+ $controller = $params[0]!= '' ? ucfirst(strtolower($params[0])):'Home';
 
-//Store the parameters in a table
-$params = explode('/',$params);
+// Path of a controller
+ $file = ROOT.'controllers/'.$controller.'.php';
 
+// Variable used to store whether a 404 error occurred
+ $error = false;
 
-//Get the controller
-//If not set choose the default controller
-$controller = $params[0]!= '' ? ucfirst(strtolower($params[0])):'Home';
+// Check if the controller exists
+ if(file_exists($file)){
+//     Get the controller object
+     $controller = "App\\Controllers\\".$controller;
 
-//Path of a controller
-$file = ROOT.'controllers/'.$controller.'.php';
+//     Check if the controller class exists
+     if(class_exists($controller)){
+//         Instanciate the controller
+         $controller = new $controller;
 
-//Variable used to store whether a 404 error occurred
-$error = false;
+//         Get the action
+//         If not set, use the default action
+         $action = isset($params[1])?strtolower($params[1]):'index';
 
-//Check if the controller exists
-if(file_exists($file)){
-    //Get the controller object
-    $controller = "App\\Controllers\\".$controller;
+//         Check if the action exists
+         if(method_exists($controller,$action)){
+//             Remove the controller and the action from the parameters table
+             unset($params[0]);
+             unset($params[1]);
 
-    //Check if the controller class exists
-    if(class_exists($controller)){
-        //Instanciate the controller
-        $controller = new $controller;
+//             Call the action and send the parameters
+             call_user_func_array([$controller,$action],$params);
+         }else{
+             $error = true;
+         }
 
-        //Get the action
-        //If not set, use the default action
-        $action = isset($params[1])?strtolower($params[1]):'index';
+     }else{
+         $error = true;
+     }
 
-        //Check if the action exists
-        if(method_exists($controller,$action)){
-            //Remove the controller and the action from the parameters table
-            unset($params[0]);
-            unset($params[1]);
+ }else{
+     $error = true;
+ }
 
-            //Call the action and send the parameters
-            call_user_func_array([$controller,$action],$params);
-        }else{
-            $error = true;
-        }
-
-    }else{
-        $error = true;
-    }
-
-}else{
-    $error = true;
-}
-
-if($error){
-    $error = new HttpErrors();
-    $error->notFound();
-}
+ if($error){
+     $error = new HttpErrors();
+     $error->notFound();
+ }
